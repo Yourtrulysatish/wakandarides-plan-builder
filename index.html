@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>WakandaRides Plan Builder</title>
+<meta name="description" content="Build your WakandaRides marketing plan with WBB. Your total updates as you go.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+/* Layout: black WBB masthead, then a two-column "cart": services with steppers on the left, a sticky running total on the right (stacks on phones with a slim total bar pinned to the bottom). The owner gets an edit mode that swaps steppers for rate inputs. */
+:root{
+  --ink:#141312; --paper:#ffffff; --sand:#f4f2ef; --line:#e3dfd9; --mute:#6b6660;
+  --orange:#f28a1f; --orange-text:#b85d06; --orange-soft:#fdf0e1; --mast:#0f0e0d; --mast-fg:#f6f3ef; --mast-mute:#cfc9c1;
+  --ok:#1f7a4d; --err:#b42318; --edit:#fff7e8; --edit-line:#f0c48a;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"Figtree","Segoe UI",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --ink:#efebe6; --paper:#141312; --sand:#1d1b19; --line:#33302c; --mute:#a39d95;
+  --orange:#f59a3b; --orange-text:#f7a755; --orange-soft:#2b2015; --mast:#0a0909; --mast-fg:#f6f3ef; --mast-mute:#cfc9c1;
+  --ok:#5cc28d; --err:#f2836f; --edit:#221a10; --edit-line:#6b4a1f; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --ink:#efebe6; --paper:#141312; --sand:#1d1b19; --line:#33302c; --mute:#a39d95;
+  --orange:#f59a3b; --orange-text:#f7a755; --orange-soft:#2b2015; --mast:#0a0909; --mast-fg:#f6f3ef; --mast-mute:#cfc9c1;
+  --ok:#5cc28d; --err:#f2836f; --edit:#221a10; --edit-line:#6b4a1f; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.mast{background:var(--mast);color:var(--mast-fg)}
+header.mast .wrap{padding-block:36px 32px;display:grid;gap:12px}
+.brand{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:-.02em}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--orange);font-weight:600}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(30px,5.5vw,44px);line-height:1.05;letter-spacing:-.025em;margin:0;text-wrap:balance}
+h1 em{font-style:normal;color:var(--orange)}
+.lede{color:var(--mast-mute);max-width:62ch;margin:0}
+.plan-len{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:6px}
+.plan-len span{font-size:14px;color:var(--mast-mute)}
+.seg{display:inline-flex;border:1px solid #3a3633;border-radius:999px;overflow:hidden}
+.seg button{font:inherit;font-size:14px;font-weight:600;border:0;background:transparent;color:var(--mast-fg);padding:7px 14px;cursor:pointer}
+.seg button+button{border-left:1px solid #3a3633}
+.seg button[aria-pressed=true]{background:var(--orange);color:#1a1006}
+
+main .wrap{padding-block:28px 120px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;align-items:start}
+@media (max-width:900px){main .wrap{grid-template-columns:minmax(0,1fr)}}
+
+.svc{display:grid;gap:4px;margin-bottom:28px}
+.svc-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:8px;margin-bottom:4px}
+.svc-head h2{font-family:var(--display);font-weight:800;font-size:22px;margin:0;letter-spacing:-.015em;text-wrap:balance}
+.svc-sub{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.svc-sub small{font-weight:500;color:var(--mute)}
+.svc-desc{font-size:14px;color:var(--mute);margin:0 0 6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px}
+.chip{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:999px;padding:6px 13px;background:var(--paper);color:var(--ink);cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chip:hover{border-color:var(--mute)}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto 92px;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.row.off .name,.row.off .total{color:var(--mute)}
+.name{font-weight:600;font-size:15px}
+.detail{font-size:13px;color:var(--mute)}
+.unit{font-size:13px;color:var(--orange-text);font-weight:600;font-variant-numeric:tabular-nums}
+.total{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.total small{display:block;font-weight:500;color:var(--mute);font-size:12px}
+.step{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.step button{font:inherit;font-size:18px;font-weight:600;width:38px;height:38px;border:0;background:var(--sand);color:var(--ink);cursor:pointer}
+.step button:disabled{opacity:.35;cursor:default}
+.step output{min-width:46px;text-align:center;font-variant-numeric:tabular-nums;font-weight:700}
+.toggle{font:inherit;font-size:14px;font-weight:600;border:1px solid var(--line);border-radius:10px;padding:8px 14px;background:var(--paper);color:var(--ink);cursor:pointer;min-width:122px}
+.toggle[aria-pressed=true]{background:var(--orange);border-color:var(--orange);color:#1a1006}
+.fixed{font-size:13px;color:var(--mute);font-weight:600;padding:8px 0;min-width:122px;text-align:center}
+.note{font-size:13.5px;border-left:3px solid var(--orange);padding:4px 0 4px 12px;margin:8px 0 0;color:var(--ink)}
+
+/* edit mode */
+body.editing .svc{background:var(--edit);border:1px solid var(--edit-line);border-radius:12px;padding:12px 14px}
+.edit-ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;justify-content:flex-end}
+.edit-ctl label{display:grid;gap:2px;font-size:11.5px;color:var(--mute);font-weight:600;letter-spacing:.02em}
+.edit-ctl input[type=number]{font:inherit;font-size:14px;width:84px;padding:7px 8px;border:1px solid var(--edit-line);border-radius:8px;background:var(--paper);color:var(--ink);font-variant-numeric:tabular-nums}
+.edit-ctl .chk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink);padding-bottom:8px}
+.edit-ctl .chk input{width:18px;height:18px;accent-color:var(--orange)}
+.edit-hint{font-size:13px;color:var(--orange-text);margin:0 0 4px}
+
+@media (max-width:560px){
+  .row{grid-template-columns:minmax(0,1fr) auto;gap:10px 12px}
+  .row .ctl{grid-column:1}
+  .row .total{grid-column:2;grid-row:2}
+  .edit-ctl{justify-content:flex-start}
+}
+button:focus-visible,input:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+
+aside.sum{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);border:2px solid var(--ink);border-radius:14px;padding:20px;display:grid;gap:14px;background:var(--paper)}
+@media (max-width:900px){aside.sum{position:static}}
+aside h2{font-family:var(--display);font-weight:800;font-size:20px;margin:0}
+.lines{display:grid;gap:6px;font-size:14px}
+.line{display:flex;justify-content:space-between;gap:12px;font-variant-numeric:tabular-nums}
+.line span:first-child{color:var(--mute)}
+.line.sep{border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
+.big{display:grid;gap:2px;background:var(--orange-soft);border-radius:10px;padding:14px}
+.big .lab{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--orange-text)}
+.big .val{font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.big .per{font-size:14px;color:var(--mute)}
+.btn{font:inherit;font-weight:600;font-size:15px;border-radius:10px;padding:11px 16px;cursor:pointer;border:1px solid var(--ink);background:var(--ink);color:var(--paper)}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.orange{background:var(--orange);border-color:var(--orange);color:#1a1006}
+.btn:disabled{opacity:.5;cursor:default}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.fine{font-size:12.5px;color:var(--mute);margin:0}
+.contact{font-size:14px}
+.contact b{user-select:all}
+textarea{font:13px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;width:100%;min-height:260px;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--sand);color:var(--ink)}
+.toast{font-size:14px;color:var(--ok);font-weight:600}
+
+.bar{display:none}
+@media (max-width:900px){
+  .bar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--mast);color:var(--mast-fg);
+    padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+    justify-content:space-between;align-items:center;gap:12px}
+  .bar b{font-family:var(--display);font-size:22px;font-variant-numeric:tabular-nums}
+  .bar small{display:block;color:var(--mast-mute);font-size:12px}
+  .bar a{color:var(--orange);font-weight:600;text-decoration:none}
+}
+footer{border-top:1px solid var(--line);color:var(--mute);font-size:13px}
+footer .wrap{padding-block:20px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.fld{display:grid;gap:4px;font-size:13px;font-weight:600;color:var(--mute)}
+.fld input{font:inherit;font-size:15px;font-weight:400;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+#out{display:grid;gap:10px}
+#out textarea{min-height:200px}
+</style>
+</head>
+<body>
+<template id="wbb-shell">
+<header class="mast">
+  <div class="wrap">
+    <div class="brand">WBB</div>
+    <div class="eyebrow">Proposal for WakandaRides · Prices in CAD</div>
+    <h1>Build your plan. <em>Your total updates as you go.</em></h1>
+    <p class="lede">We've filled in the plan we recommend. Use + and − to change any item, switch services on or off, and send us your final selection. We'll confirm it and send the agreement.</p>
+    <div class="plan-len"><span>Plan length</span><div class="seg" id="months" role="group" aria-label="Plan length"></div></div>
+  </div>
+</header>
+<main>
+  <div class="wrap">
+    <div id="services"></div>
+    <aside class="sum" id="summary" aria-live="polite">
+      <h2 id="sum-title">Your plan</h2>
+      <div class="lines" id="lines"></div>
+      <div class="big"><span class="lab" id="big-lab">3-month total</span><span class="val" id="big-val">$0</span><span class="per" id="big-per"></span></div>
+      <div class="actions" id="cust-actions">
+        <button class="btn orange" type="button" id="make">Get my summary</button>
+        <button class="btn ghost" type="button" id="reset">Reset to recommended</button>
+      </div>
+      <form id="out" hidden="" novalidate>
+        <p class="contact">Send your selection to WBB and we'll confirm it and send the agreement. Or copy it and WhatsApp <b>+91 99741 81574</b>.</p>
+        <label class="fld">Your name<input id="f-name" name="name" autocomplete="name" required></label>
+        <label class="fld">Email<input id="f-email" name="email" type="email" autocomplete="email" required></label>
+        <label class="fld">Phone or WhatsApp (optional)<input id="f-phone" name="phone" type="tel" autocomplete="tel"></label>
+        <input id="f-honey" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+        <textarea id="out-text" readonly="" aria-label="Your plan summary"></textarea>
+        <div class="actions"><button class="btn orange" type="submit" id="send">Send to WBB</button><button class="btn ghost" type="button" id="copy">Copy summary</button></div>
+        <p class="toast" id="toast" role="status"></p>
+        <p class="fine">We use your name and email only to reply about this plan.</p>
+      </form>
+      <p class="fine">Prices exclude taxes, ad spend, creator fees and event costs. Paid press release publishing is charged at each outlet's own price. Reviews come only from real riders and drivers. No one is paid or rewarded for a review.</p>
+    </aside>
+  </div>
+</main>
+<div class="bar" aria-hidden="true"><div><small id="bar-lab">3-month total</small><b id="bar-val">$0</b></div><a href="#summary">See summary ↓</a></div>
+<footer><div class="wrap"><span>WBB · We Build Brands · webuildbrands.in</span><span id="updated"></span></div></footer>
+</template>
+<div id="app"></div>
+<script type="application/json" id="wbb-data">
+{"updated":"2026-10-31T16:24:25.725Z","months":[3,6,9,12],"defaultMonths":3,"platforms":["Instagram","TikTok","Facebook","LinkedIn page","YouTube Shorts","X (Twitter)","Threads"],"defaultPlatforms":["Instagram","TikTok","Facebook","LinkedIn page"],"sections":[{"id":"social","title":"Social media management","desc":"We plan, design, post and reply on your channels. Pick your platforms, then choose how much content you want each month.","platforms":true,"items":[{"id":"static","name":"Static posts","detail":"Designed posts, shared across your chosen platforms","unit":"post","price":10,"qty":8,"max":40,"step":1,"kind":"monthly"},{"id":"carousel","name":"Carousels","detail":"Up to 8 slides each","unit":"carousel","price":30,"qty":4,"max":20,"step":1,"kind":"monthly"},{"id":"reels","name":"Reels & short videos (social team)","detail":"Edited from your footage and templates, posted to every video platform","unit":"reel","price":80,"qty":4,"max":30,"step":1,"kind":"monthly"},{"id":"stories","name":"Stories","detail":"Instagram and Facebook","unit":"story","price":6,"qty":12,"max":60,"step":1,"kind":"monthly"},{"id":"sched","name":"Captions, hashtags & scheduling","detail":"Charged per platform you pick above","unit":"platform","price":120,"derived":"platforms","kind":"monthly"},{"id":"cm","name":"Community management","detail":"Replies to comments and DMs on business days (ET), per platform","unit":"platform","price":120,"derived":"platforms","toggle":true,"on":true,"kind":"monthly"}]},{"id":"ceo","title":"Founder LinkedIn for Moubareck","desc":"Posts written in Moubareck's voice and approved by him, plus engagement that grows his network.","items":[{"id":"ceo_posts","name":"Ghostwritten posts","detail":"Approved by Moubareck before posting","unit":"post","price":30,"qty":8,"max":20,"step":1,"kind":"monthly"},{"id":"ceo_eng","name":"Engagement","detail":"15–20 comments a week, plus targeted connection requests","unit":"week","price":60,"qty":4,"max":4,"step":1,"kind":"monthly"},{"id":"ceo_prof","name":"Profile optimisation","detail":"Headline, About, featured section, banner (Month 1)","unit":"","price":0,"included":true,"kind":"onetime"}]},{"id":"creatives","title":"Creatives & video editing","desc":"New videos and design pieces made by our team, and edits of footage you send us.","items":[{"id":"cr_videos","name":"Short videos we produce","detail":"App demos, how-tos, rider and driver stories","unit":"video","price":75,"qty":8,"max":30,"step":1,"kind":"monthly"},{"id":"cr_edits","name":"Testimonial edits","detail":"Your footage, with subtitles and thumbnail","unit":"edit","price":40,"qty":4,"max":20,"step":1,"kind":"monthly"},{"id":"cr_design","name":"Design pieces","detail":"Campus posters, flyers, partner one-pagers","unit":"piece","price":50,"qty":4,"max":20,"step":1,"kind":"monthly"}]},{"id":"pr","title":"PR & media relations","desc":"Coverage in Toronto, Ottawa and Montreal media, plus student, tech and startup outlets.","items":[{"id":"pr_pack","name":"Press release: writing, media outreach, pitching & follow-ups","detail":"We write the release, reach out to media houses and journalists, pitch it and follow up","unit":"month","price":800,"qty":1,"max":1,"kind":"monthly"},{"id":"pr_int","name":"Interview & feature coordination","detail":"Arranged and prepared for Moubareck","unit":"interview","price":125,"qty":2,"max":6,"step":1,"kind":"monthly"},{"id":"pr_award","name":"Award & speaking submissions","detail":"1–2 a quarter","unit":"month","price":150,"qty":1,"max":1,"kind":"monthly"}]},{"id":"pr_paid","title":"Paid press release publishing (optional)","desc":"Media houses and wire services charge a fixed price to publish a release. Add any you want; we book it at their price, with no markup.","note":"Prices are the outlets' published rates (USD converted at 1 USD = 1.40 CAD) and can change. We confirm the exact price before booking. Every paid placement is labelled as a press release or sponsored content.","items":[{"id":"pp_ein","name":"Online wire distribution (EIN Presswire Basic)","detail":"Release posted on EIN Presswire and its news partner sites (USD 149)","unit":"release","price":210,"qty":0,"max":12,"step":1,"kind":"plan"},{"id":"pp_cision","name":"US & Canada newsroom wire via Cision (Send2Press + Cision Basic)","detail":"Sent to newsrooms over the Cision network (USD 599)","unit":"release","price":840,"qty":0,"max":12,"step":1,"kind":"plan"},{"id":"pp_local","name":"Sponsored article on a local Canadian news site","detail":"Labelled as sponsored. Community news sites start around $280; larger outlets cost more","unit":"article","price":280,"qty":0,"max":12,"step":1,"kind":"plan"}]},{"id":"partners","title":"Partnerships & student ambassadors","desc":"Campus, brand and community partners and events, plus a student ambassador programme with tracked links.","items":[{"id":"pa_out","name":"Partnership development","detail":"Identifying partners and events, reaching out, setting up partnerships and following up","unit":"month","price":350,"qty":1,"max":1,"kind":"monthly"},{"id":"pa_amb","name":"Student ambassador programme","detail":"Identifying and onboarding student ambassadors, plus a toolkit, scripts and ready-made content","unit":"month","price":250,"qty":1,"max":1,"kind":"monthly"},{"id":"pa_track","name":"Tracked links & reporting","detail":"Clicks and bookings from partner and ambassador links","unit":"month","price":100,"qty":1,"max":1,"kind":"monthly"}]},{"id":"reviews","title":"Reviews & ratings","desc":"Genuine reviews from real riders and drivers, requested after completed trips. Set your target for the whole plan. Replies to every review are included.","note":"A target, not a guarantee: the number of reviews depends on how many trips riders and drivers complete.","items":[{"id":"rv_google","name":"Google Reviews","detail":"Target for the whole plan","unit":"review","price":3,"qty":100,"max":500,"step":10,"kind":"plan"},{"id":"rv_play","name":"Google Play Store","detail":"Target for the whole plan","unit":"review","price":3,"qty":100,"max":500,"step":10,"kind":"plan"},{"id":"rv_apple","name":"Apple App Store","detail":"Target for the whole plan","unit":"review","price":5,"qty":100,"max":500,"step":10,"kind":"plan"}]},{"id":"onetime","title":"One-time setup (Month 1)","desc":"Charged once, at the start of the plan.","items":[{"id":"ot_onb","name":"Onboarding, content pillars & templates","detail":"","unit":"","price":500,"qty":1,"max":1,"kind":"onetime"},{"id":"ot_film","name":"Explainer film, 60–90 seconds","detail":"\"How WakandaRides works\", in English with French subtitles","unit":"film","price":600,"qty":1,"max":3,"step":1,"kind":"onetime"},{"id":"ot_lang_fr","name":"Explainer film: French version","detail":"Voice-over and on-screen text changed from English to French","unit":"film","price":200,"qty":0,"max":3,"step":1,"kind":"onetime"},{"id":"ot_lang_hi","name":"Explainer film: Hindi version","detail":"Voice-over and on-screen text changed from English to Hindi","unit":"film","price":200,"qty":0,"max":3,"step":1,"kind":"onetime"},{"id":"ot_lang_pa","name":"Explainer film: Punjabi version","detail":"Voice-over and on-screen text changed from English to Punjabi","unit":"film","price":200,"qty":0,"max":3,"step":1,"kind":"onetime"},{"id":"ot_lang_gu","name":"Explainer film: Gujarati version","detail":"Voice-over and on-screen text changed from English to Gujarati","unit":"film","price":200,"qty":0,"max":3,"step":1,"kind":"onetime"},{"id":"ot_kit","name":"Press kit & press page","detail":"Founder bio, fact sheet, photos, logos","unit":"","price":300,"qty":1,"max":1,"kind":"onetime"},{"id":"ot_rev","name":"Review request setup","detail":"Request flow, QR codes, specs for in-app rating prompts","unit":"","price":300,"qty":1,"max":1,"kind":"onetime"}]},{"id":"reporting","title":"Monthly reporting","desc":"","items":[{"id":"rp","name":"Monthly report & 30-minute review call","detail":"Followers, reach, sign-ups, posted rides, bookings, reviews, press coverage","unit":"","price":0,"included":true,"kind":"monthly"}]}]}
+</script>
+<script>
+const DATA = JSON.parse(document.getElementById("wbb-data").textContent);
+const SHELL = document.getElementById("wbb-shell");
+document.getElementById("app").replaceChildren(SHELL.content.cloneNode(true));
+const $ = s => document.querySelector(s);
+const fmt = n => "$" + Math.round(n).toLocaleString("en-CA");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+const KEY = "wbb-wakanda-plan-" + DATA.updated;
+
+let editing = false, draft = null;
+const D = () => editing ? draft : DATA;
+const allItems = d => d.sections.flatMap(s => s.items);
+
+function defaults(d){
+  const qty = {}, on = {};
+  allItems(d).forEach(it => { if (it.qty != null) qty[it.id] = it.qty; if (it.toggle) on[it.id] = it.on; });
+  return {qty, on, platforms:[...d.defaultPlatforms], months:d.defaultMonths || 3};
+}
+let S = defaults(DATA);
+try { const saved = JSON.parse(localStorage.getItem(KEY) || "null"); if (saved && saved.qty) S = Object.assign(defaults(DATA), saved); } catch(e) {}
+function save(){ if (editing) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
+
+function plats(){ return editing ? draft.defaultPlatforms : S.platforms; }
+function qtyOf(it){
+  if (it.included) return 0;
+  if (editing){
+    if (it.derived === "platforms") return it.toggle && !it.on ? 0 : draft.defaultPlatforms.length;
+    return it.qty || 0;
+  }
+  if (it.derived === "platforms") return it.toggle && !S.on[it.id] ? 0 : S.platforms.length;
+  return S.qty[it.id] ?? 0;
+}
+const lineCost = it => qtyOf(it) * (it.price || 0);
+function totals(){
+  let monthly = 0, plan = 0, onetime = 0; const bySec = {};
+  D().sections.forEach(s => {
+    let m = 0, p = 0, o = 0;
+    s.items.forEach(it => { const c = lineCost(it); if (it.kind === "monthly") m += c; else if (it.kind === "plan") p += c; else o += c; });
+    bySec[s.id] = {m, p, o}; monthly += m; plan += p; onetime += o;
+  });
+  return {monthly, plan, onetime, total: monthly * S.months + plan + onetime, bySec};
+}
+const suffix = it => it.kind === "monthly" ? "/mo" : it.kind === "plan" ? "for plan" : "one-time";
+const isSwitch = it => !it.included && !it.derived && it.max === 1;
+
+function control(it){
+  if (editing) return editControl(it);
+  if (it.included) return `<span class="fixed">Included</span>`;
+  if (it.derived === "platforms" && !it.toggle) return `<span class="fixed">${S.platforms.length} platform${S.platforms.length===1?"":"s"}</span>`;
+  if (it.toggle){ const on = !!S.on[it.id]; return `<button class="toggle" type="button" data-toggle="${it.id}" aria-pressed="${on}">${on?"Added ✓":"Add"}</button>`; }
+  if (isSwitch(it)){ const on = (S.qty[it.id]||0) === 1; return `<button class="toggle" type="button" data-switch="${it.id}" aria-pressed="${on}">${on?"Added ✓":"Add"}</button>`; }
+  const q = S.qty[it.id] || 0;
+  return `<div class="step" role="group" aria-label="${esc(it.name)} quantity"><button type="button" data-dec="${it.id}" aria-label="Fewer" ${q<=0?"disabled":""}>−</button><output>${q}</output><button type="button" data-inc="${it.id}" aria-label="More" ${q>=it.max?"disabled":""}>+</button></div>`;
+}
+function editControl(it){
+  if (it.included) return `<span class="fixed">Included</span>`;
+  const price = `<label>Rate (CAD)<input type="number" min="0" step="1" inputmode="numeric" id="p-${it.id}" data-f="price" data-id="${it.id}" value="${it.price}"></label>`;
+  if (it.derived === "platforms"){
+    return `<div class="edit-ctl">${price}${it.toggle?`<span class="chk"><input type="checkbox" id="o-${it.id}" data-f="on" data-id="${it.id}" ${it.on?"checked":""}><label for="o-${it.id}" style="display:inline;font-size:13px;color:inherit">On by default</label></span>`:""}</div>`;
+  }
+  if (isSwitch(it)){
+    return `<div class="edit-ctl">${price}<span class="chk"><input type="checkbox" id="o-${it.id}" data-f="qty1" data-id="${it.id}" ${it.qty?"checked":""}><label for="o-${it.id}" style="display:inline;font-size:13px;color:inherit">In recommended plan</label></span></div>`;
+  }
+  return `<div class="edit-ctl">${price}<label>Recommended<input type="number" min="0" step="1" id="q-${it.id}" data-f="qty" data-id="${it.id}" value="${it.qty}"></label><label>Max<input type="number" min="1" step="1" id="m-${it.id}" data-f="max" data-id="${it.id}" value="${it.max}"></label></div>`;
+}
+function rowTotal(it){
+  if (it.included) return `$0<small>included</small>`;
+  return `${fmt(lineCost(it))}<small>${suffix(it)}</small>`;
+}
+function secSub(s, b){
+  if (s.id === "reporting") return "Included";
+  if (b.o && !b.m && !b.p) return `${fmt(b.o)} <small>one-time</small>`;
+  if (b.p && !b.m) return `${fmt(b.p)} <small>for the plan</small>`;
+  return `${fmt(b.m)} <small>/mo</small>`;
+}
+
+function renderList(){
+  document.body.classList.toggle("editing", editing);
+  $("#months").innerHTML = D().months.map(m => `<button type="button" data-months="${m}" aria-pressed="${S.months===m}">${m} months</button>`).join("");
+  const t = totals();
+  $("#services").innerHTML = (editing ? `<p class="edit-hint">Editing rates. Change any rate or recommended quantity; the totals preview the recommended plan. Nothing changes for others until you save.</p>` : "") + D().sections.map(s => {
+    const chips = s.platforms ? `<div class="chips" role="group" aria-label="Platforms">${D().platforms.map(p => `<button class="chip" type="button" data-plat="${esc(p)}" aria-pressed="${plats().includes(p)}">${esc(p)}</button>`).join("")}</div>${editing?`<p class="edit-hint">Platforms selected here are the recommended default.</p>`:""}` : "";
+    const rows = s.items.map(it => {
+      const q = qtyOf(it);
+      const unit = (it.included || editing) ? "" : `<div class="unit">${fmt(it.price)}${it.unit?` per ${esc(it.unit)}`:""}</div>`;
+      const unitEdit = editing && !it.included && it.unit ? `<div class="unit">per ${esc(it.unit)}</div>` : "";
+      return `<div class="row ${q===0 && !it.included ? "off":""}" id="r-${it.id}"><div><div class="name">${esc(it.name)}</div>${it.detail?`<div class="detail">${esc(it.detail)}</div>`:""}${unit}${unitEdit}</div><div class="ctl">${control(it)}</div><div class="total" id="t-${it.id}">${rowTotal(it)}</div></div>`;
+    }).join("");
+    return `<section class="svc" id="sec-${s.id}"><div class="svc-head"><h2>${esc(s.title)}</h2><span class="svc-sub" id="s-${s.id}">${secSub(s, t.bySec[s.id])}</span></div>${s.desc?`<p class="svc-desc">${esc(s.desc)}</p>`:""}${chips}${rows}${s.note?`<p class="note">${esc(s.note)}</p>`:""}</section>`;
+  }).join("");
+  renderTotals();
+}
+function renderTotals(){
+  const t = totals();
+  D().sections.forEach(s => {
+    const el = document.getElementById("s-" + s.id); if (el) el.innerHTML = secSub(s, t.bySec[s.id]);
+    s.items.forEach(it => { const r = document.getElementById("t-" + it.id); if (r) r.innerHTML = rowTotal(it); const row = document.getElementById("r-" + it.id); if (row) row.classList.toggle("off", qtyOf(it) === 0 && !it.included); });
+  });
+  const L = [];
+  D().sections.forEach(s => { const b = t.bySec[s.id]; if (b.m) L.push([s.title, fmt(b.m) + "/mo"]); });
+  L.push(["Monthly retainer", fmt(t.monthly) + "/mo", true]);
+  D().sections.forEach(s => { const b = t.bySec[s.id]; if (b.p) L.push([s.id === "reviews" ? `Reviews (${reviewCount()} over the plan)` : `${s.title.replace(" (optional)", "")}, for the plan`, fmt(b.p)]); });
+  if (t.onetime) L.push(["One-time setup (Month 1)", fmt(t.onetime)]);
+  $("#lines").innerHTML = L.map(([a,b,sep]) => `<div class="line ${sep?"sep":""}"><span>${esc(a)}</span><span>${b}</span></div>`).join("");
+  $("#sum-title").textContent = editing ? "Recommended plan (preview)" : "Your plan";
+  $("#big-lab").textContent = $("#bar-lab").textContent = `${S.months}-month total`;
+  $("#big-val").textContent = $("#bar-val").textContent = fmt(t.total);
+  $("#big-per").textContent = `About ${fmt(t.total / S.months)} a month on average · Month 1: ${fmt(t.monthly + t.onetime + t.plan / S.months)}`;
+  $("#cust-actions").hidden = editing;
+  if (editing) $("#out").hidden = true;
+  else if (!$("#out").hidden) $("#out-text").value = summaryText();
+  const d = new Date(DATA.updated);
+  $("#updated").textContent = isNaN(d) ? "" : "Rates updated " + d.toLocaleDateString("en-GB", {day:"numeric", month:"short", year:"numeric"});
+  save();
+}
+function reviewCount(){ const s = D().sections.find(x => x.id === "reviews"); return s ? s.items.reduce((n, it) => n + qtyOf(it), 0) : 0; }
+
+function summaryText(){
+  const t = totals(); const out = [];
+  out.push("WakandaRides plan with WBB (prices in CAD)");
+  out.push(`Plan length: ${S.months} months`);
+  out.push(`Social platforms: ${S.platforms.join(", ") || "none"}`);
+  out.push("");
+  DATA.sections.forEach(s => {
+    const lines = s.items.filter(it => it.included || qtyOf(it) > 0);
+    if (!lines.length) return;
+    out.push(s.title.toUpperCase());
+    lines.forEach(it => {
+      if (it.included) { out.push(`- ${it.name}: included`); return; }
+      const q = qtyOf(it);
+      out.push(`- ${it.name}: ${q} × ${fmt(it.price)} = ${fmt(q*it.price)} ${suffix(it)}`);
+    });
+    out.push("");
+  });
+  out.push(`Monthly retainer: ${fmt(t.monthly)}/mo`);
+  DATA.sections.forEach(s => { const b = t.bySec[s.id]; if (b.p) out.push(`${s.title.replace(" (optional)", "")}, for the plan: ${fmt(b.p)}`); });
+  if (t.onetime) out.push(`One-time setup: ${fmt(t.onetime)}`);
+  out.push(`TOTAL for ${S.months} months: ${fmt(t.total)}`);
+  out.push("Excludes taxes, ad spend, creator fees and event costs. Paid publishing is charged at each outlet's price.");
+  return out.join("\n");
+}
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const d = b.dataset;
+  if (editing){
+    if (d.plat){ const p = d.plat, list = draft.defaultPlatforms; draft.defaultPlatforms = list.includes(p) ? list.filter(x => x !== p) : draft.platforms.filter(x => x === p || list.includes(x)); }
+    else if (d.months){ S.months = +d.months; }
+    else return;
+    const y = window.scrollY; renderList(); window.scrollTo(0, y); return;
+  }
+  const find = id => allItems(DATA).find(i => i.id === id);
+  if (d.inc){ const it = find(d.inc); S.qty[it.id] = Math.min(it.max, (S.qty[it.id]||0) + (it.step||1)); }
+  else if (d.dec){ const it = find(d.dec); S.qty[it.id] = Math.max(0, (S.qty[it.id]||0) - (it.step||1)); }
+  else if (d.switch){ S.qty[d.switch] = (S.qty[d.switch]||0) ? 0 : 1; }
+  else if (d.toggle){ S.on[d.toggle] = !S.on[d.toggle]; }
+  else if (d.plat){ const p = d.plat; S.platforms = S.platforms.includes(p) ? S.platforms.filter(x => x !== p) : DATA.platforms.filter(x => x === p || S.platforms.includes(x)); }
+  else if (d.months){ S.months = +d.months; }
+  else if (b.id === "reset"){ S = defaults(DATA); $("#out").hidden = true; }
+  else if (b.id === "make"){ $("#out").hidden = false; $("#out-text").value = summaryText(); $("#toast").textContent = ""; $("#f-name").focus(); }
+  else if (b.id === "copy"){
+    const ta = $("#out-text"); const done = () => $("#toast").textContent = "Copied";
+    const fallback = () => { ta.focus(); ta.select(); $("#toast").textContent = "Selected: press Ctrl+C or ⌘C to copy"; };
+    try { navigator.clipboard.writeText(ta.value).then(done, fallback); } catch(err) { fallback(); }
+    return;
+  } else return;
+  const y = window.scrollY; renderList(); window.scrollTo(0, y);
+});
+
+renderList();
+
+/* Submissions are emailed to the owner through FormSubmit (https://formsubmit.co). */
+const SUBMIT_URL = "https://formsubmit.co/ajax/satishofficial001@gmail.com";
+$("#out").addEventListener("submit", async e => {
+  e.preventDefault();
+  const form = e.target, toast = $("#toast"), btn = $("#send");
+  if (!form.checkValidity()) { form.reportValidity(); return; }
+  const t = totals();
+  btn.disabled = true; toast.style.color = ""; toast.textContent = "Sending…";
+  try {
+    const res = await fetch(SUBMIT_URL, {
+      method: "POST",
+      headers: {"Content-Type": "application/json", "Accept": "application/json"},
+      body: JSON.stringify({
+        _subject: `WakandaRides plan: ${fmt(t.total)} over ${S.months} months`,
+        _template: "box",
+        _captcha: "false",
+        _honey: $("#f-honey").value,
+        name: $("#f-name").value.trim(),
+        email: $("#f-email").value.trim(),
+        phone: $("#f-phone").value.trim(),
+        total: fmt(t.total),
+        months: S.months,
+        plan: summaryText()
+      })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok || out.success === "false") throw new Error(out.message || res.status);
+    toast.textContent = "Sent. We'll confirm your plan within 24 to 48 hours.";
+  } catch (err) {
+    toast.style.color = "var(--err)";
+    toast.textContent = "Couldn't send. Please copy the summary and WhatsApp it to +91 99741 81574.";
+  }
+  btn.disabled = false;
+});
+
+</script>
+</body>
+</html>
